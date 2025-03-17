@@ -14,13 +14,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
 
 @RequiredArgsConstructor
 @Slf4j
+// 토큰 생성 및 전달
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
 
-//        log.info("로그인 요청 왔음~~~");
+        log.info("로그인 요청 왔음~~~");
         try {
             ObjectMapper om = new ObjectMapper();
             User user = om.readValue(request.getInputStream(), User.class);
@@ -40,12 +40,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
 
             Authentication authenticated = authenticationManager.authenticate(authenticationToken);
-
-            // 시큐리티 세션에 저장
-            if(authenticated != null) {
-                SecurityContextHolder.getContext().setAuthentication(authenticated);
-            }
-
             return authenticated;
 
         } catch(IOException e) {
@@ -61,7 +55,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                                             Authentication authResult) throws IOException, ServletException {
     log.info("인증되었음~~~~");
     PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
-
     // JwtTokenUtil을 사용하여 JWT 토큰 생성
     String jwtToken = JwtUtil.createToken(principalDetails);
     // 응답 헤더에 토큰 추가

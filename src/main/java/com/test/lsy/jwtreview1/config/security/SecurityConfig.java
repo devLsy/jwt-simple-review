@@ -1,6 +1,8 @@
 package com.test.lsy.jwtreview1.config.security;
 
 import com.test.lsy.jwtreview1.filter.JwtAuthenticationFilter;
+import com.test.lsy.jwtreview1.filter.JwtAuthorizationFilter;
+import com.test.lsy.jwtreview1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,7 @@ public class SecurityConfig {
 
     private final CorsFilter corsFilter;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final UserRepository repository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,6 +40,8 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 // JWT 필터(토큰 생성)
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))
+                // JWT 토큰 인증
+                .addFilterBefore(new JwtAuthorizationFilter(), JwtAuthenticationFilter.class)
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/api/v1/user/**")
                                 .hasAnyRole("USER", "MANAGER", "ADMIN")
