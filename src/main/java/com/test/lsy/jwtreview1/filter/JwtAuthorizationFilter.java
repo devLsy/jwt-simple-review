@@ -24,22 +24,26 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
-    private UserRepository repository;
+    private final UserRepository repository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
-//        log.info("jwtHeader :: {}", jwtHeader);
+        log.info("JWT 토큰 인증 요청~~~");
 
-        if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.HEADER_STRING)) {
+        String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
+        log.info("jwtHeader :: {}", jwtHeader);
+
+        if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String jwtToken = request.getHeader(JwtProperties.HEADER_STRING).replace("Bearer ", "");
+
+        log.info("jwtToken :: {}", jwtToken);
 
         String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build()
                 .verify(jwtToken)
@@ -51,7 +55,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             User findUser = repository.findByUsername(username);
             PrincipalDetails principalDetails = new PrincipalDetails(findUser);
 
+            log.info("principalDetails :: {}", principalDetails.getUsername());
+
             Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
+            log.info("authentication :: {}", authentication);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

@@ -41,7 +41,7 @@ public class SecurityConfig {
                 // JWT 필터(토큰 생성)
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))
                 // JWT 토큰 인증
-                .addFilterBefore(new JwtAuthorizationFilter(), JwtAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthorizationFilter(repository), JwtAuthenticationFilter.class)
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/api/v1/user/**")
                                 .hasAnyRole("USER", "MANAGER", "ADMIN")
