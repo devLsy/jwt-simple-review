@@ -1,8 +1,11 @@
 package com.test.lsy.jwtreview1.config.security;
 
+import com.test.lsy.jwtreview1.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,6 +22,7 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig {
 
     private final CorsFilter corsFilter;
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,6 +35,8 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 // http 기본 인증 방식 사용하지 않겠다.
                 .httpBasic(basic -> basic.disable())
+                // JWT 필터(토큰 생성)
+                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/api/v1/user/**")
                                 .hasAnyRole("USER", "MANAGER", "ADMIN")
@@ -41,6 +47,11 @@ public class SecurityConfig {
                                 .anyRequest().permitAll()
                 );
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() throws Exception {
+        return authenticationConfiguration.getAuthenticationManager(); // 수정
     }
 
     @Bean
