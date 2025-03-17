@@ -36,6 +36,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
         log.info("jwtHeader :: {}", jwtHeader);
 
+
+        String requestURI = request.getRequestURI();
+        if (requestURI.equals("/login") || requestURI.equals("/join")) {  // 로그인, 회원가입 경로 예시
+            filterChain.doFilter(request, response);  // 로그인 요청은 JWT 검증을 건너뜁니다.
+            return;
+        }
+
         if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
 //            filterChain.doFilter(request, response);
 //            return;
