@@ -37,7 +37,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         log.info("jwtHeader :: {}", jwtHeader);
 
         if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
-            filterChain.doFilter(request, response);
+//            filterChain.doFilter(request, response);
+//            return;
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized
             return;
         }
 
