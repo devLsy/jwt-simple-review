@@ -2,6 +2,8 @@ package com.test.lsy.jwtreview1.filter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.test.lsy.jwtreview1.auth.PrincipalDetails;
 import com.test.lsy.jwtreview1.jwt.JwtProperties;
 import com.test.lsy.jwtreview1.model.User;
@@ -44,32 +46,42 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
-//            filterChain.doFilter(request, response);
-//            return;
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("유효하지 않은 토큰입니다.");
             return;
         }
 
-        String jwtToken = request.getHeader(JwtProperties.HEADER_STRING).replace("Bearer ", "");
+        try {
+            String jwtToken = request.getHeader(JwtProperties.HEADER_STRING).replace("Bearer ", "");
 
-        log.info("jwtToken :: {}", jwtToken);
+            log.info("jwtToken :: {}", jwtToken);
 
-        String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build()
-                .verify(jwtToken)
-                .getClaim("username")
-                .asString();
+            String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build()
+                    .verify(jwtToken)
+                    .getClaim("username")
+                    .asString();
 
-        if(username != null) {
-            log.info("정상 서명됨~");
-            User findUser = repository.findByUsername(username);
-            PrincipalDetails principalDetails = new PrincipalDetails(findUser);
+            if(username != null) {
+                log.info("정상 서명됨~");
+                User findUser = repository.findByUsername(username);
+                PrincipalDetails principalDetails = new PrincipalDetails(findUser);
 
-            log.info("principalDetails :: {}", principalDetails.getUsername());
+                log.info("principalDetails :: {}", principalDetails.getUsername());
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
-            log.info("authentication :: {}", authentication);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
+                log.info("authentication :: {}", authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+            filterChain.doFilter(request, response);
+
+        } catch (TokenExpiredException e) {  // JWT 토큰 만료 예외
+            response.getWriter().write("{\"error\": \"토큰이 만료되었습니다.\"}");
+        } catch (JWTVerificationException e) {  // 기타 JWT 검증 오류
+            response.getWriter().write("{\"error\": \"유효하지 않은 토큰입니다.\"}");
+        } catch (Exception e) {  // 기타 예외
+            response.getWriter().write("{\"error\": \"토큰 검증 중 오류가 발생했습니다.\"}");
         }
-        filterChain.doFilter(request, response);
     }
 }
