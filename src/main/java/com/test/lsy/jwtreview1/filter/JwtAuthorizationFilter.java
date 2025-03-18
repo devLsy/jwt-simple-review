@@ -46,9 +46,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write("유효하지 않은 토큰입니다.");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
             return;
         }
 
@@ -76,12 +74,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
-        } catch (TokenExpiredException e) {  // JWT 토큰 만료 예외
-            response.getWriter().write("{\"error\": \"토큰이 만료되었습니다.\"}");
-        } catch (JWTVerificationException e) {  // 기타 JWT 검증 오류
-            response.getWriter().write("{\"error\": \"유효하지 않은 토큰입니다.\"}");
-        } catch (Exception e) {  // 기타 예외
-            response.getWriter().write("{\"error\": \"토큰 검증 중 오류가 발생했습니다.\"}");
+        } catch (TokenExpiredException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰이 만료되었습니다.");
+        } catch (JWTVerificationException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰 검증 중 오류가 발생했습니다.");
         }
     }
 }
